@@ -11,8 +11,9 @@ This document describes the design patterns and best practices used throughout t
 5. [CLI Patterns](#cli-patterns)
 6. [Logging Patterns](#logging-patterns)
 7. [Error Handling](#error-handling)
-8. [Testing Patterns](#testing-patterns)
-9. [Type Safety](#type-safety)
+8. [Webhook Notifications](#webhook-notifications)
+9. [Testing Patterns](#testing-patterns)
+10. [Type Safety](#type-safety)
 
 ---
 
@@ -412,6 +413,133 @@ def run_backup(config: Config) -> BackupResult:
 
 ---
 
+## Webhook Notifications
+
+### Discord Notifier Pattern
+
+The Discord notifier follows a simple, fire-and-forget pattern for sending notifications:
+
+```python
+class DiscordNotifier:
+    """Send notifications to Discord via webhook."""
+
+    def __init__(self, config: DiscordConfig) -> None:
+        self.config = config
+        self._client: httpx.Client | None = None
+
+    @property
+    def client(self) -> httpx.Client:
+        """Lazy-initialize HTTP client."""
+        if self._client is None:
+            self._client = httpx.Client(timeout=10.0)
+        return self._client
+
+    def close(self) -> None:
+        """Close the HTTP client."""
+        if self._client is not None:
+            self._client.close()
+
+    def notify_backup_complete(self, result: BackupResult) -> bool:
+        """Send notification when backup completes."""
+        if not self.config.enabled:
+            return True
+
+        if result.success and not self.config.notify_on_success:
+            return True
+
+        embed = self._create_embed(...)
+        return self._send_embed(embed)
+```
+
+**Key patterns:**
+- Lazy client initialization (only create when first used)
+- Explicit `close()` method for resource cleanup
+- Early returns based on config flags
+- Returns `bool` for success/failure (doesn't throw)
+
+### Configuration-Driven Notifications
+
+Notifications respect multiple config flags:
+
+```python
+@dataclass
+class DiscordConfig:
+    webhook_url: str = ""
+    enabled: bool = False
+    notify_on_start: bool = True
+    notify_on_success: bool = True
+    notify_on_failure: bool = True
+```
+
+**Benefits:**
+- Users can enable/disable specific notification types
+- Reduces noise (e.g., only notify on failures)
+- Environment variable override for webhook URL
+
+### Notification Integration Points
+
+Different integration points for CLI vs scheduler:
+
+```python
+# CLI: Completion notifications only (user sees start)
+def backup(ctx: Context) -> None:
+    result = run_backup(ctx.config)
+    ctx.formatter.output(result)
+
+    if ctx.config.discord.enabled:
+        notifier = DiscordNotifier(ctx.config.discord)
+        notifier.notify_backup_complete(result)
+        notifier.close()
+
+# Scheduler: Start + completion notifications
+def backup_job(config: Config) -> None:
+    notifier = None
+    if config.discord.enabled:
+        notifier = DiscordNotifier(config.discord)
+        notifier.notify_backup_started(str(config.backup.output_dir))
+
+    try:
+        result = run_backup(config)
+        if notifier:
+            notifier.notify_backup_complete(result)
+    finally:
+        if notifier:
+            notifier.close()
+```
+
+**Rationale:**
+- CLI is interactive; user knows when it starts
+- Scheduler runs unattended; start notifications provide visibility
+
+### Discord Embed Format
+
+Rich embeds provide structured information:
+
+```python
+def _create_embed(
+    self,
+    title: str,
+    description: str,
+    color: int,
+    fields: list[dict] | None = None,
+) -> dict:
+    return {
+        "title": title,
+        "description": description,
+        "color": color,
+        "timestamp": datetime.now(UTC).isoformat(),
+        "footer": {"text": "NotionTimeCapsule"},
+        "fields": fields or [],
+    }
+```
+
+**Color conventions:**
+- `0x2ECC71` (green) - Success
+- `0xE74C3C` (red) - Failure
+- `0x3498DB` (blue) - Info/Started
+
+---
+
 ## Testing Patterns
 
 ### Test Organization
@@ -505,3 +633,4 @@ def get_config() -> Config | None:
 | Error collection | `backup/exporter.py` | Partial success handling |
 | Pagination iterators | `notion/client.py` | Memory-efficient API |
 | Signal handlers | `scheduler/daemon.py` | Graceful shutdown |
+| Webhook notifications | `utils/discord.py` | External alerting |

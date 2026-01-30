@@ -9,6 +9,7 @@ A Python CLI application to periodically backup your Notion workspace to markdow
 - **Attachments**: Download images and file attachments
 - **Daily Content**: Generate content from templates and append to Notion pages
 - **Scheduler**: Built-in daemon for automated backups and daily content generation
+- **Discord Notifications**: Get alerts when backups and daily jobs start, succeed, or fail
 
 ## Installation
 
@@ -65,7 +66,42 @@ target_page_id = "your-page-id-here"
 backup_schedule = "daily"  # or "hourly", or cron syntax
 daily_time = "06:00"
 timezone = "America/New_York"
+
+[discord]
+webhook_url = ""  # Or set DISCORD_WEBHOOK_URL env var
+enabled = true
+notify_on_start = true
+notify_on_success = true
+notify_on_failure = true
 ```
+
+### Discord Notifications
+
+To receive notifications when backups and daily content jobs run:
+
+1. Create a Discord webhook:
+   - Go to your Discord server
+   - Server Settings > Integrations > Webhooks > New Webhook
+   - Select the channel (e.g., `#bots`)
+   - Copy the webhook URL
+
+2. Configure the webhook URL:
+   ```bash
+   # Via environment variable
+   export DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/..."
+   ```
+   Or in `config.toml`:
+   ```toml
+   [discord]
+   webhook_url = "https://discord.com/api/webhooks/..."
+   enabled = true
+   ```
+
+3. Notification types:
+   - **Backup Started** (scheduler only): When a scheduled backup begins
+   - **Backup Complete/Failed**: With stats (pages backed up, errors)
+   - **Daily Started** (scheduler only): When scheduled daily content begins
+   - **Daily Complete/Failed**: With block count or error message
 
 ## Usage
 

@@ -29,3 +29,21 @@ daily_time = "06:00"
 
 # Timezone for scheduling (IANA timezone name)
 timezone = "America/New_York"
+
+[discord]
+# Discord webhook URL for notifications
+# Can also be set via DISCORD_WEBHOOK_URL environment variable
+# To create a webhook: Server Settings > Integrations > Webhooks > New Webhook
+webhook_url = ""
+
+# Enable Discord notifications
+enabled = false
+
+# Send notification when backup/daily job starts (scheduler only)
+notify_on_start = true
+
+# Send notification on successful completion
+notify_on_success = true
+
+# Send notification on failure
+notify_on_failure = true

@@ -163,6 +163,14 @@ def backup(
     assert ctx.formatter is not None
     ctx.formatter.output(result)
 
+    # Send Discord notification if enabled
+    if ctx.config.discord.enabled:
+        from notion_time_capsule.utils.discord import DiscordNotifier
+
+        notifier = DiscordNotifier(ctx.config.discord)
+        notifier.notify_backup_complete(result)
+        notifier.close()
+
     if not result.success:
         sys.exit(ExitCode.PARTIAL_FAILURE if result.pages_backed_up > 0 else ExitCode.GENERAL_ERROR)
 
@@ -260,6 +268,14 @@ def daily(
 
     assert ctx.formatter is not None
     ctx.formatter.output(result)
+
+    # Send Discord notification if enabled
+    if ctx.config.discord.enabled:
+        from notion_time_capsule.utils.discord import DiscordNotifier
+
+        notifier = DiscordNotifier(ctx.config.discord)
+        notifier.notify_daily_complete(result)
+        notifier.close()
 
     if not result.success:
         sys.exit(ExitCode.GENERAL_ERROR)

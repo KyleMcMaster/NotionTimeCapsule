@@ -44,6 +44,17 @@ class SchedulerConfig:
 
 
 @dataclass
+class DiscordConfig:
+    """Discord notification settings."""
+
+    webhook_url: str = ""
+    enabled: bool = False
+    notify_on_start: bool = True
+    notify_on_success: bool = True
+    notify_on_failure: bool = True
+
+
+@dataclass
 class Config:
     """Main application configuration."""
 
@@ -51,6 +62,7 @@ class Config:
     backup: BackupConfig = field(default_factory=BackupConfig)
     daily: DailyConfig = field(default_factory=DailyConfig)
     scheduler: SchedulerConfig = field(default_factory=SchedulerConfig)
+    discord: DiscordConfig = field(default_factory=DiscordConfig)
 
     def validate(self) -> list[str]:
         """Validate the configuration.
@@ -70,6 +82,9 @@ class Config:
 
         if self.daily.template_path and not self.daily.template_path.exists():
             errors.append(f"Template file not found: {self.daily.template_path}")
+
+        if self.discord.enabled and not self.discord.webhook_url:
+            errors.append("Discord webhook_url is required when notifications are enabled")
 
         return errors
 
@@ -113,6 +128,7 @@ def load_config(config_path: Path | str | None = None) -> Config:
     backup_data = config_data.get("backup", {})
     daily_data = config_data.get("daily", {})
     scheduler_data = config_data.get("scheduler", {})
+    discord_data = config_data.get("discord", {})
 
     backup_config = BackupConfig(
         output_dir=Path(backup_data.get("output_dir", "./backups")),
@@ -131,6 +147,14 @@ def load_config(config_path: Path | str | None = None) -> Config:
         timezone=scheduler_data.get("timezone", "America/New_York"),
     )
 
+    discord_config = DiscordConfig(
+        webhook_url=discord_data.get("webhook_url", ""),
+        enabled=discord_data.get("enabled", False),
+        notify_on_start=discord_data.get("notify_on_start", True),
+        notify_on_success=discord_data.get("notify_on_success", True),
+        notify_on_failure=discord_data.get("notify_on_failure", True),
+    )
+
     # Environment variable overrides
     notion_token = os.environ.get("NOTION_TOKEN", "")
 
@@ -141,9 +165,13 @@ def load_config(config_path: Path | str | None = None) -> Config:
     if target_page := os.environ.get("NOTION_DAILY_PAGE"):
         daily_config.target_page_id = target_page
 
+    if webhook_url := os.environ.get("DISCORD_WEBHOOK_URL"):
+        discord_config.webhook_url = webhook_url
+
     return Config(
         notion_token=notion_token,
         backup=backup_config,
         daily=daily_config,
         scheduler=scheduler_config,
+        discord=discord_config,
     )

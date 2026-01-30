@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from notion_time_capsule.backup.exporter import run_backup
 from notion_time_capsule.daily.publisher import run_daily
 from notion_time_capsule.daily.template import TemplateEngine
+from notion_time_capsule.utils.discord import DiscordNotifier
 from notion_time_capsule.utils.logging import get_logger
 
 if TYPE_CHECKING:
@@ -23,6 +24,11 @@ def backup_job(config: Config) -> None:
     """
     logger.info("Starting scheduled backup job")
 
+    notifier: DiscordNotifier | None = None
+    if config.discord.enabled:
+        notifier = DiscordNotifier(config.discord)
+        notifier.notify_backup_started(str(config.backup.output_dir))
+
     try:
         result = run_backup(config)
 
@@ -38,8 +44,15 @@ def backup_job(config: Config) -> None:
                 len(result.errors),
             )
 
+        if notifier:
+            notifier.notify_backup_complete(result)
+
     except Exception as e:
         logger.error("Backup job failed: %s", e)
+
+    finally:
+        if notifier:
+            notifier.close()
 
 
 def daily_job(config: Config) -> None:
@@ -49,6 +62,8 @@ def daily_job(config: Config) -> None:
         config: Application configuration
     """
     logger.info("Starting scheduled daily content job")
+
+    notifier: DiscordNotifier | None = None
 
     try:
         # Check if daily is configured
@@ -62,6 +77,11 @@ def daily_job(config: Config) -> None:
                 config.daily.template_path,
             )
             return
+
+        # Initialize notifier and send start notification
+        if config.discord.enabled:
+            notifier = DiscordNotifier(config.discord)
+            notifier.notify_daily_started(config.daily.target_page_id)
 
         # Read and render template
         engine = TemplateEngine()
@@ -80,5 +100,12 @@ def daily_job(config: Config) -> None:
         else:
             logger.error("Daily job failed: %s", result.error)
 
+        if notifier:
+            notifier.notify_daily_complete(result)
+
     except Exception as e:
         logger.error("Daily job failed: %s", e)
+
+    finally:
+        if notifier:
+            notifier.close()

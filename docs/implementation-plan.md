@@ -142,6 +142,14 @@ timezone = "America/New_York"
 - [x] Update README with usage docs
 - [x] Document patterns and best practices in `docs/patterns.md`
 
+### Phase 7: Discord Notifications
+- [x] Add `DiscordConfig` dataclass to `config.py`
+- [x] Create `utils/discord.py` with `DiscordNotifier` class
+- [x] Integrate notifications in CLI commands (completion only)
+- [x] Integrate notifications in scheduler jobs (start + completion)
+- [x] Add `[discord]` section to `config.example.toml`
+- [x] Add `httpx` dependency for webhook requests
+
 ## Key Design Decisions
 
 | Decision | Choice | Rationale |
