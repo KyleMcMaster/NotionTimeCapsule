@@ -12,6 +12,7 @@ NotionTimeCapsule is a Python CLI application that:
 ## Key Documentation
 
 - **Implementation Plan**: `docs/implementation-plan.md` - Architecture decisions, project structure, and design rationale
+- **Patterns & Best Practices**: `docs/patterns.md` - Design patterns, code conventions, and rationale
 - **Configuration Example**: `config.example.toml` - Available configuration options
 
 ## Architecture

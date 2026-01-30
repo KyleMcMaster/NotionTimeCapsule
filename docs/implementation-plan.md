@@ -136,10 +136,11 @@ timezone = "America/New_York"
 - [x] Add `schedule` CLI command
 
 ### Phase 6: Testing & Polish
-- [ ] Unit tests for markdown conversion, templates, rate limiter
+- [x] Unit tests for markdown conversion, templates, rate limiter
 - [ ] Integration tests for backup/daily workflows
 - [ ] CLI tests with Click's `CliRunner`
 - [x] Update README with usage docs
+- [x] Document patterns and best practices in `docs/patterns.md`
 
 ## Key Design Decisions
 
