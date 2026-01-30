@@ -188,6 +188,22 @@ notion-time-capsule schedule --foreground
 notion-time-capsule schedule
 ```
 
+### Status Check
+
+```bash
+# Show system status and health check
+notion-time-capsule status
+
+# JSON output
+notion-time-capsule --json status
+```
+
+Output includes:
+- Configuration validity and any errors
+- Last backup time and statistics (pages, databases, attachments)
+- Backup directory status
+- Discord notification configuration
+
 ### Configuration Management
 
 ```bash

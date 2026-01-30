@@ -11,7 +11,7 @@ import click
 from notion_time_capsule import __version__
 from notion_time_capsule.config import ConfigurationError, load_config
 from notion_time_capsule.utils.logging import setup_logging
-from notion_time_capsule.utils.output import ExitCode, OutputFormatter
+from notion_time_capsule.utils.output import ExitCode, OutputFormatter, StatusResult
 
 if TYPE_CHECKING:
     from notion_time_capsule.config import Config
@@ -318,6 +318,75 @@ def schedule(ctx: Context, foreground: bool) -> None:
     )
 
     run_scheduler(config=ctx.config, foreground=foreground)
+
+
+@main.command()
+@pass_context
+def status(ctx: Context) -> None:
+    """Show backup and system status.
+
+    Displays a health check including last backup time, statistics,
+    configuration validity, and notification settings.
+
+    Examples:
+
+        notion-time-capsule status
+
+        notion-time-capsule --json status
+    """
+    import json as json_module
+
+    assert ctx.config is not None
+
+    # Read backup state if it exists
+    state_file = ctx.config.backup.output_dir / ".state" / "checksums.json"
+    last_backup_time: str | None = None
+    pages_count = 0
+    databases_count = 0
+    attachments_count = 0
+
+    if state_file.exists():
+        with open(state_file, "rb") as f:
+            state_data = json_module.load(f)
+
+        last_backup_time = state_data.get("saved_at")
+        pages = state_data.get("pages", {})
+        databases = state_data.get("databases", {})
+
+        pages_count = len(pages)
+        databases_count = len(databases)
+
+        # Count attachments across all pages
+        for page_data in pages.values():
+            attachments_count += len(page_data.get("attachment_hashes", {}))
+
+    # Validate configuration
+    config_errors = ctx.config.validate()
+    config_valid = len(config_errors) == 0
+
+    # Check Discord configuration
+    discord_enabled = ctx.config.discord.enabled
+    discord_configured = bool(ctx.config.discord.webhook_url)
+
+    result = StatusResult(
+        config_valid=config_valid,
+        config_errors=config_errors,
+        last_backup_time=last_backup_time,
+        pages_count=pages_count,
+        databases_count=databases_count,
+        attachments_count=attachments_count,
+        backup_dir=str(ctx.config.backup.output_dir),
+        backup_dir_exists=ctx.config.backup.output_dir.exists(),
+        incremental_enabled=ctx.config.backup.incremental,
+        discord_enabled=discord_enabled,
+        discord_configured=discord_configured,
+    )
+
+    assert ctx.formatter is not None
+    ctx.formatter.output(result)
+
+    if not config_valid:
+        sys.exit(ExitCode.CONFIGURATION_ERROR)
 
 
 @main.group()

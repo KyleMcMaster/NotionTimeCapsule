@@ -12,8 +12,9 @@ This document describes the design patterns and best practices used throughout t
 6. [Logging Patterns](#logging-patterns)
 7. [Error Handling](#error-handling)
 8. [Webhook Notifications](#webhook-notifications)
-9. [Testing Patterns](#testing-patterns)
-10. [Type Safety](#type-safety)
+9. [Status/Health Check](#statushealth-check)
+10. [Testing Patterns](#testing-patterns)
+11. [Type Safety](#type-safety)
 
 ---
 
@@ -540,6 +541,107 @@ def _create_embed(
 
 ---
 
+## Status/Health Check
+
+### Result Dataclass Pattern
+
+Status checks use a dedicated result dataclass for structured output:
+
+```python
+@dataclass
+class StatusResult:
+    """Result of a status check."""
+    config_valid: bool
+    config_errors: list[str]
+    last_backup_time: str | None
+    pages_count: int
+    databases_count: int
+    attachments_count: int
+    backup_dir: str
+    backup_dir_exists: bool
+    incremental_enabled: bool
+    discord_enabled: bool
+    discord_configured: bool
+```
+
+**Benefits:**
+- Type-safe result structure
+- Easy serialization to JSON via `asdict()`
+- Consistent with `BackupResult` and `DailyResult` patterns
+
+### Reading Persisted State
+
+The status command reads from the backup state file without modifying it:
+
+```python
+state_file = config.backup.output_dir / ".state" / "checksums.json"
+
+if state_file.exists():
+    with open(state_file, "rb") as f:
+        state_data = json.load(f)
+
+    last_backup_time = state_data.get("saved_at")
+    pages_count = len(state_data.get("pages", {}))
+    databases_count = len(state_data.get("databases", {}))
+```
+
+**Key points:**
+- Read-only access to state file
+- Graceful handling when no backups exist
+- Extracts counts from persisted dictionaries
+
+### Aggregating Multiple Data Sources
+
+Status checks combine information from multiple sources:
+
+| Data | Source |
+|------|--------|
+| Configuration validity | `config.validate()` |
+| Last backup time | `.state/checksums.json` |
+| Page/database counts | `.state/checksums.json` |
+| Backup directory status | Filesystem check |
+| Discord configuration | `config.discord.*` |
+
+**Pattern:**
+```python
+# Validate config
+config_errors = ctx.config.validate()
+config_valid = len(config_errors) == 0
+
+# Check filesystem
+backup_dir_exists = ctx.config.backup.output_dir.exists()
+
+# Check feature flags
+discord_enabled = ctx.config.discord.enabled
+discord_configured = bool(ctx.config.discord.webhook_url)
+```
+
+### Dual Output Format
+
+Status supports both human-readable and JSON output via the `OutputFormatter`:
+
+```python
+def _output_status_human(self, result: StatusResult) -> None:
+    print("Status Check")
+    print("=" * 40)
+
+    print("Configuration:")
+    if result.config_valid:
+        print("  Status: valid")
+    else:
+        print("  Status: INVALID", file=sys.stderr)
+        for error in result.config_errors:
+            print(f"    - {error}", file=sys.stderr)
+    # ... more sections
+```
+
+**Human output sections:**
+1. Configuration (validity, backup dir, incremental mode)
+2. Last Backup (time, pages, databases, attachments)
+3. Notifications (Discord status)
+
+---
+
 ## Testing Patterns
 
 ### Test Organization
@@ -634,3 +736,4 @@ def get_config() -> Config | None:
 | Pagination iterators | `notion/client.py` | Memory-efficient API |
 | Signal handlers | `scheduler/daemon.py` | Graceful shutdown |
 | Webhook notifications | `utils/discord.py` | External alerting |
+| Status result dataclass | `utils/output.py` | Structured health checks |

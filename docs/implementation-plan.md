@@ -150,6 +150,13 @@ timezone = "America/New_York"
 - [x] Add `[discord]` section to `config.example.toml`
 - [x] Add `httpx` dependency for webhook requests
 
+### Phase 8: Status/Health Check
+- [x] Add `StatusResult` dataclass to `utils/output.py`
+- [x] Add `status` command to CLI
+- [x] Read backup state from `.state/checksums.json`
+- [x] Display configuration validity, backup stats, Discord status
+- [x] Support JSON output with `--json` flag
+
 ## Key Design Decisions
 
 | Decision | Choice | Rationale |
