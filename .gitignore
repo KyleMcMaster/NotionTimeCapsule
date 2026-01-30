@@ -208,3 +208,7 @@ __marimo__/
 
 # GitHub configuration
 .github/
+
+# NotionTimeCapsule specific
+backups/
+config.toml
