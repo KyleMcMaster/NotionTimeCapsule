@@ -1,0 +1,49 @@
+# NotionTimeCapsule Configuration
+# Copy this file to config.toml and fill in your settings.
+# Set NOTION_TOKEN environment variable with your Notion integration token.
+
+[backup]
+# Directory where backups will be stored
+output_dir = "./backups"
+
+# Whether to download file attachments and images
+include_attachments = true
+
+# Only backup changed content (uses timestamps and content hashes)
+incremental = true
+
+[daily]
+# Path to the template file for daily content generation
+template_path = "./templates/daily.md"
+
+# Notion page ID where daily content will be appended
+# Get this from the page URL: https://notion.so/Page-Name-{page_id}
+target_page_id = ""
+
+[scheduler]
+# Backup schedule: "hourly", "daily", or cron syntax like "0 */2 * * *"
+backup_schedule = "daily"
+
+# Time to run daily content generation (24-hour format)
+daily_time = "06:00"
+
+# Timezone for scheduling (IANA timezone name)
+timezone = "America/New_York"
+
+[discord]
+# Discord webhook URL for notifications
+# Can also be set via DISCORD_WEBHOOK_URL environment variable
+# To create a webhook: Server Settings > Integrations > Webhooks > New Webhook
+webhook_url = ""
+
+# Enable Discord notifications
+enabled = false
+
+# Send notification when backup/daily job starts (scheduler only)
+notify_on_start = true
+
+# Send notification on successful completion
+notify_on_success = true
+
+# Send notification on failure
+notify_on_failure = true
