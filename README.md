@@ -12,19 +12,20 @@ A Python CLI application to periodically backup your Notion workspace to markdow
 
 ## Installation
 
-Requires Python 3.11+.
+Requires Python 3.11+ and [uv](https://docs.astral.sh/uv/).
 
 ```bash
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # Clone the repository
 git clone https://github.com/kylemcmaster/NotionTimeCapsule.git
 cd NotionTimeCapsule
 
-# Create and activate virtual environment
-python -m venv myenv
+# Create virtual environment and install dependencies
+uv venv myenv
 source myenv/bin/activate  # On Windows: myenv\Scripts\activate
-
-# Install in development mode
-pip install -e ".[dev]"
+uv pip install -e ".[dev]"
 ```
 
 ## Configuration
@@ -215,7 +216,7 @@ properties: {}  # For database pages
 
 ```bash
 # Install dev dependencies
-pip install -e ".[dev]"
+uv pip install -e ".[dev]"
 
 # Run tests
 pytest

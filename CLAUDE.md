@@ -47,7 +47,7 @@ src/notion_time_capsule/
 
 ```bash
 # Install dependencies
-pip install -e ".[dev]"
+uv pip install -e ".[dev]"
 
 # Run CLI
 notion-time-capsule --help
