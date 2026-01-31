@@ -405,6 +405,37 @@ def status(ctx: Context) -> None:
         sys.exit(ExitCode.CONFIGURATION_ERROR)
 
 
+@main.command("test-discord")
+@pass_context
+def test_discord(ctx: Context) -> None:
+    """Test Discord webhook configuration.
+
+    Sends a test notification to verify the Discord webhook is
+    configured correctly and can receive messages.
+
+    Examples:
+
+        notion-time-capsule test-discord
+    """
+    assert ctx.config is not None
+
+    if not ctx.config.discord.webhook_url:
+        click.echo("Error: Discord webhook URL is not configured", err=True)
+        sys.exit(ExitCode.CONFIGURATION_ERROR)
+
+    from notion_time_capsule.utils.discord import DiscordNotifier
+
+    notifier = DiscordNotifier(ctx.config.discord)
+    success = notifier.send_test()
+    notifier.close()
+
+    if success:
+        click.echo("Discord test notification sent successfully")
+    else:
+        click.echo("Error: Failed to send Discord notification", err=True)
+        sys.exit(ExitCode.GENERAL_ERROR)
+
+
 @main.group()
 def config() -> None:
     """Manage configuration."""

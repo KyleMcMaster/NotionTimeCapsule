@@ -180,6 +180,23 @@ class DiscordNotifier:
 
         return self._send_embed(embed)
 
+    def send_test(self) -> bool:
+        """Send a test notification to verify webhook configuration.
+
+        Returns:
+            True if notification was sent successfully
+        """
+        embed = self._create_embed(
+            title="Test Notification",
+            description="Discord webhook is configured correctly.",
+            color=COLOR_INFO,
+            fields=[
+                {"name": "Status", "value": "Connected", "inline": True},
+            ],
+        )
+
+        return self._send_embed(embed)
+
     def _create_embed(
         self,
         title: str,
