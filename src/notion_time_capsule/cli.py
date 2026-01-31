@@ -152,6 +152,14 @@ def backup(
         click.echo("Dry run mode - would backup to: " f"{ctx.config.backup.output_dir}")
         return
 
+    # Send Discord notification if enabled
+    if ctx.config.discord.enabled:
+        from notion_time_capsule.utils.discord import DiscordNotifier
+
+        notifier = DiscordNotifier(ctx.config.discord)
+        notifier.notify_backup_started(str(ctx.config.backup.output_dir))
+        notifier.close()
+
     # Import here to avoid circular imports and defer heavy imports
     from notion_time_capsule.backup.exporter import run_backup
 
@@ -260,6 +268,14 @@ def daily(
         click.echo(rendered)
         click.echo("-" * 40)
         return
+
+    # Send Discord notification if enabled
+    if ctx.config.discord.enabled:
+        from notion_time_capsule.utils.discord import DiscordNotifier
+
+        notifier = DiscordNotifier(ctx.config.discord)
+        notifier.notify_daily_started(ctx.config.daily.target_page_id)
+        notifier.close()
 
     result = run_daily(
         config=ctx.config,

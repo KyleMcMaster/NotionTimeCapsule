@@ -58,7 +58,7 @@ class NotionClient:
 
         Args:
             query: Search query string
-            filter_type: Filter to "page" or "database"
+            filter_type: Filter to "page" or "data_source" (for databases)
             sort_direction: Sort by last_edited_time ("ascending" or "descending")
             page_size: Number of results per page (max 100)
             start_cursor: Cursor for pagination
@@ -224,7 +224,8 @@ class NotionClient:
         cursor = None
 
         while True:
-            results = self.search(filter_type="database", start_cursor=cursor)
+            # Notion API uses "data_source" for databases (not "database")
+            results = self.search(filter_type="data_source", start_cursor=cursor)
 
             for item in results.get("results", []):
                 yield item
