@@ -69,7 +69,6 @@ timezone = "America/New_York"
 
 [discord]
 webhook_url = ""  # Or set DISCORD_WEBHOOK_URL env var
-enabled = true
 notify_on_start = true
 notify_on_success = true
 notify_on_failure = true

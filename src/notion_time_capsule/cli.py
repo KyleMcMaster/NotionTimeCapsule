@@ -152,8 +152,8 @@ def backup(
         click.echo("Dry run mode - would backup to: " f"{ctx.config.backup.output_dir}")
         return
 
-    # Send Discord notification if enabled
-    if ctx.config.discord.enabled:
+    # Send Discord notification if webhook is configured
+    if ctx.config.discord.webhook_url:
         from notion_time_capsule.utils.discord import DiscordNotifier
 
         notifier = DiscordNotifier(ctx.config.discord)
@@ -171,8 +171,8 @@ def backup(
     assert ctx.formatter is not None
     ctx.formatter.output(result)
 
-    # Send Discord notification if enabled
-    if ctx.config.discord.enabled:
+    # Send Discord notification if webhook is configured
+    if ctx.config.discord.webhook_url:
         from notion_time_capsule.utils.discord import DiscordNotifier
 
         notifier = DiscordNotifier(ctx.config.discord)
@@ -269,8 +269,8 @@ def daily(
         click.echo("-" * 40)
         return
 
-    # Send Discord notification if enabled
-    if ctx.config.discord.enabled:
+    # Send Discord notification if webhook is configured
+    if ctx.config.discord.webhook_url:
         from notion_time_capsule.utils.discord import DiscordNotifier
 
         notifier = DiscordNotifier(ctx.config.discord)
@@ -285,8 +285,8 @@ def daily(
     assert ctx.formatter is not None
     ctx.formatter.output(result)
 
-    # Send Discord notification if enabled
-    if ctx.config.discord.enabled:
+    # Send Discord notification if webhook is configured
+    if ctx.config.discord.webhook_url:
         from notion_time_capsule.utils.discord import DiscordNotifier
 
         notifier = DiscordNotifier(ctx.config.discord)

@@ -50,7 +50,7 @@ class DiscordNotifier:
         Returns:
             True if notification was sent successfully
         """
-        if not self.config.enabled or not self.config.notify_on_start:
+        if not self.config.notify_on_start:
             return True
 
         embed = self._create_embed(
@@ -73,9 +73,6 @@ class DiscordNotifier:
         Returns:
             True if notification was sent successfully
         """
-        if not self.config.enabled:
-            return True
-
         if result.success and not self.config.notify_on_success:
             return True
 
@@ -125,7 +122,7 @@ class DiscordNotifier:
         Returns:
             True if notification was sent successfully
         """
-        if not self.config.enabled or not self.config.notify_on_start:
+        if not self.config.notify_on_start:
             return True
 
         embed = self._create_embed(
@@ -148,9 +145,6 @@ class DiscordNotifier:
         Returns:
             True if notification was sent successfully
         """
-        if not self.config.enabled:
-            return True
-
         if result.success and not self.config.notify_on_success:
             return True
 
