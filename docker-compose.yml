@@ -1,0 +1,15 @@
+services:
+  notion-time-capsule:
+    build: .
+    container_name: notion-time-capsule
+    restart: unless-stopped
+    environment:
+      - NOTION_TOKEN=${NOTION_TOKEN}
+      - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL:-}
+    volumes:
+      - ./config.toml:/app/config.toml:ro
+      - ./backups:/app/backups
+      - ./templates:/app/templates:ro
+    # Override command for different operations:
+    # command: ["notion-time-capsule", "backup"]
+    # command: ["notion-time-capsule", "daily"]

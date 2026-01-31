@@ -10,6 +10,7 @@ A Python CLI application to periodically backup your Notion workspace to markdow
 - **Daily Content**: Generate content from templates and append to Notion pages
 - **Scheduler**: Built-in daemon for automated backups and daily content generation
 - **Discord Notifications**: Get alerts when backups and daily jobs start, succeed, or fail
+- **Docker Support**: Run as a container with built-in health checks
 
 ## Installation
 
@@ -93,13 +94,18 @@ To receive notifications when backups and daily content jobs run:
    ```toml
    [discord]
    webhook_url = "https://discord.com/api/webhooks/..."
-   enabled = true
+   ```
+   Notifications are automatically enabled when a webhook URL is configured.
+
+3. Test the webhook:
+   ```bash
+   notion-time-capsule test-discord
    ```
 
-3. Notification types:
-   - **Backup Started** (scheduler only): When a scheduled backup begins
+4. Notification types:
+   - **Backup Started**: When a backup begins
    - **Backup Complete/Failed**: With stats (pages backed up, errors)
-   - **Daily Started** (scheduler only): When scheduled daily content begins
+   - **Daily Started**: When daily content generation begins
    - **Daily Complete/Failed**: With block count or error message
 
 ## Usage
@@ -262,6 +268,63 @@ parent_id: null
 properties: {}  # For database pages
 ---
 ```
+
+## Docker
+
+Run NotionTimeCapsule as a Docker container for easy deployment.
+
+### Build
+
+```bash
+docker build -t notion-time-capsule .
+```
+
+### Run Scheduler
+
+```bash
+docker run -d \
+  --name notion-scheduler \
+  --restart unless-stopped \
+  -e NOTION_TOKEN=your_token \
+  -v $(pwd)/config.toml:/app/config.toml:ro \
+  -v $(pwd)/backups:/app/backups \
+  -v $(pwd)/templates:/app/templates:ro \
+  notion-time-capsule
+```
+
+### Run One-Off Backup
+
+```bash
+docker run --rm \
+  -e NOTION_TOKEN=your_token \
+  -v $(pwd)/backups:/app/backups \
+  notion-time-capsule notion-time-capsule backup
+```
+
+### Docker Compose
+
+```bash
+# Start scheduler
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Run backup
+docker-compose run --rm notion-time-capsule notion-time-capsule backup
+
+# Stop
+docker-compose down
+```
+
+Create a `.env` file for secrets:
+
+```bash
+NOTION_TOKEN=secret_xxx
+DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/...
+```
+
+See [docs/docker.md](docs/docker.md) for complete Docker documentation.
 
 ## Development
 
