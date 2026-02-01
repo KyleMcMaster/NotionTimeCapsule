@@ -137,6 +137,12 @@ def backup(
     """
     assert ctx.config is not None
 
+    # Check if backup is enabled
+    if not ctx.config.backup.enabled:
+        click.echo("Backup is disabled in configuration.", err=True)
+        click.echo("Set backup.enabled = true in config.toml or NOTION_BACKUP_ENABLED=true", err=True)
+        sys.exit(ExitCode.CONFIGURATION_ERROR)
+
     # Validate token
     if not ctx.config.notion_token:
         click.echo("Error: NOTION_TOKEN environment variable is required", err=True)
@@ -235,6 +241,12 @@ def daily(
     """
     assert ctx.config is not None
 
+    # Check if daily is enabled
+    if not ctx.config.daily.enabled:
+        click.echo("Daily content generation is disabled in configuration.", err=True)
+        click.echo("Set daily.enabled = true in config.toml or NOTION_DAILY_ENABLED=true", err=True)
+        sys.exit(ExitCode.CONFIGURATION_ERROR)
+
     # Validate token
     if not ctx.config.notion_token:
         click.echo("Error: NOTION_TOKEN environment variable is required", err=True)
@@ -325,12 +337,21 @@ def schedule(ctx: Context, foreground: bool) -> None:
         click.echo("Error: NOTION_TOKEN environment variable is required", err=True)
         sys.exit(ExitCode.AUTHENTICATION_ERROR)
 
+    # Warn if all features are disabled
+    if not ctx.config.backup.enabled and not ctx.config.daily.enabled:
+        click.echo("Error: Both backup and daily are disabled. Scheduler has nothing to do.", err=True)
+        sys.exit(ExitCode.CONFIGURATION_ERROR)
+
     # Import here to defer heavy imports
     from notion_time_capsule.scheduler.daemon import run_scheduler
 
+    # Show enabled/disabled status
+    backup_status = "enabled" if ctx.config.backup.enabled else "DISABLED"
+    daily_status = "enabled" if ctx.config.daily.enabled else "DISABLED"
+
     click.echo(
-        f"Starting scheduler (backup: {ctx.config.scheduler.backup_schedule}, "
-        f"daily: {ctx.config.scheduler.daily_time})"
+        f"Starting scheduler (backup: {ctx.config.scheduler.backup_schedule} [{backup_status}], "
+        f"daily: {ctx.config.scheduler.daily_time} [{daily_status}])"
     )
 
     run_scheduler(config=ctx.config, foreground=foreground)
@@ -396,6 +417,8 @@ def status(ctx: Context) -> None:
         incremental_enabled=ctx.config.backup.incremental,
         discord_enabled=discord_enabled,
         discord_configured=discord_configured,
+        backup_enabled=ctx.config.backup.enabled,
+        daily_enabled=ctx.config.daily.enabled,
     )
 
     assert ctx.formatter is not None
@@ -454,11 +477,13 @@ def config_show(ctx: Context) -> None:
         config_dict = {
             "notion_token": "***" if ctx.config.notion_token else "(not set)",
             "backup": {
+                "enabled": ctx.config.backup.enabled,
                 "output_dir": str(ctx.config.backup.output_dir),
                 "include_attachments": ctx.config.backup.include_attachments,
                 "incremental": ctx.config.backup.incremental,
             },
             "daily": {
+                "enabled": ctx.config.daily.enabled,
                 "template_path": str(ctx.config.daily.template_path),
                 "target_page_id": ctx.config.daily.target_page_id or "(not set)",
             },
@@ -475,11 +500,13 @@ def config_show(ctx: Context) -> None:
         click.echo(f"  NOTION_TOKEN: {'***' if ctx.config.notion_token else '(not set)'}")
         click.echo()
         click.echo("  [backup]")
+        click.echo(f"    enabled: {ctx.config.backup.enabled}")
         click.echo(f"    output_dir: {ctx.config.backup.output_dir}")
         click.echo(f"    include_attachments: {ctx.config.backup.include_attachments}")
         click.echo(f"    incremental: {ctx.config.backup.incremental}")
         click.echo()
         click.echo("  [daily]")
+        click.echo(f"    enabled: {ctx.config.daily.enabled}")
         click.echo(f"    template_path: {ctx.config.daily.template_path}")
         click.echo(f"    target_page_id: {ctx.config.daily.target_page_id or '(not set)'}")
         click.echo()

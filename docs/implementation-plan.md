@@ -228,3 +228,13 @@ backups/
 - Health check via `notion-time-capsule status` command
 - Default command runs scheduler daemon
 - See `docs/docker.md` for complete documentation
+
+### 2026-02-01
+
+**Feature Toggles:**
+- Added `enabled` field to `BackupConfig` and `DailyConfig` (default: `true`)
+- Environment variable overrides: `NOTION_BACKUP_ENABLED`, `NOTION_DAILY_ENABLED`
+- Scheduler skips disabled features with informative logging
+- CLI commands exit with error message when feature is disabled
+- Status command shows enabled/disabled state for both features
+- `config show` displays enabled state for both backup and daily sections

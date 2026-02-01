@@ -22,6 +22,10 @@ def backup_job(config: Config) -> None:
     Args:
         config: Application configuration
     """
+    if not config.backup.enabled:
+        logger.info("Backup job skipped: backup is disabled")
+        return
+
     logger.info("Starting scheduled backup job")
 
     notifier: DiscordNotifier | None = None
@@ -61,6 +65,10 @@ def daily_job(config: Config) -> None:
     Args:
         config: Application configuration
     """
+    if not config.daily.enabled:
+        logger.info("Daily job skipped: daily content generation is disabled")
+        return
+
     logger.info("Starting scheduled daily content job")
 
     notifier: DiscordNotifier | None = None

@@ -6,6 +6,10 @@
 notion_token = ""
 
 [backup]
+# Enable/disable backup feature (default: true)
+# Can also be set via NOTION_BACKUP_ENABLED environment variable
+enabled = true
+
 # Directory where backups will be stored
 output_dir = "./backups"
 
@@ -16,6 +20,10 @@ include_attachments = true
 incremental = true
 
 [daily]
+# Enable/disable daily content generation (default: true)
+# Can also be set via NOTION_DAILY_ENABLED environment variable
+enabled = false
+
 # Path to the template file for daily content generation
 template_path = "./templates/daily.md"
 

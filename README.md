@@ -55,11 +55,13 @@ cp config.example.toml config.toml
 
 ```toml
 [backup]
+enabled = true  # Set to false to disable backups
 output_dir = "./backups"
 include_attachments = true
 incremental = true
 
 [daily]
+enabled = true  # Set to false to disable daily content
 template_path = "./templates/daily.md"
 target_page_id = "your-page-id-here"
 

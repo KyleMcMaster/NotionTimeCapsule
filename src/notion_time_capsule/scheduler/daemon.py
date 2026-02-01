@@ -46,32 +46,36 @@ class SchedulerDaemon:
         """Configure job schedules based on configuration."""
         schedule.clear()
 
-        # Set up backup schedule
-        backup_schedule = self.config.scheduler.backup_schedule.lower()
-
-        if backup_schedule == "hourly":
-            schedule.every().hour.do(backup_job, self.config)
-            logger.info("Backup scheduled: every hour")
-
-        elif backup_schedule == "daily":
-            schedule.every().day.at("00:00").do(backup_job, self.config)
-            logger.info("Backup scheduled: daily at 00:00")
-
-        elif self._is_cron_expression(backup_schedule):
-            # Parse cron expression (simplified - just support common patterns)
-            self._schedule_cron(backup_schedule, backup_job)
-
+        # Set up backup schedule (only if enabled)
+        if not self.config.backup.enabled:
+            logger.info("Backup is disabled, skipping backup schedule")
         else:
-            logger.warning(
-                "Unknown backup schedule '%s', defaulting to daily",
-                backup_schedule,
-            )
-            schedule.every().day.at("00:00").do(backup_job, self.config)
+            backup_schedule = self.config.scheduler.backup_schedule.lower()
 
-        # Set up daily content schedule
-        daily_time = self.config.scheduler.daily_time
+            if backup_schedule == "hourly":
+                schedule.every().hour.do(backup_job, self.config)
+                logger.info("Backup scheduled: every hour")
 
-        if self.config.daily.target_page_id:
+            elif backup_schedule == "daily":
+                schedule.every().day.at("00:00").do(backup_job, self.config)
+                logger.info("Backup scheduled: daily at 00:00")
+
+            elif self._is_cron_expression(backup_schedule):
+                # Parse cron expression (simplified - just support common patterns)
+                self._schedule_cron(backup_schedule, backup_job)
+
+            else:
+                logger.warning(
+                    "Unknown backup schedule '%s', defaulting to daily",
+                    backup_schedule,
+                )
+                schedule.every().day.at("00:00").do(backup_job, self.config)
+
+        # Set up daily content schedule (only if enabled)
+        if not self.config.daily.enabled:
+            logger.info("Daily content generation is disabled, skipping daily schedule")
+        elif self.config.daily.target_page_id:
+            daily_time = self.config.scheduler.daily_time
             schedule.every().day.at(daily_time).do(daily_job, self.config)
             logger.info("Daily content scheduled: every day at %s", daily_time)
         else:

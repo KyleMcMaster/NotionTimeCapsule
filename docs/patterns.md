@@ -123,7 +123,9 @@ def load_config(config_path: Path | None = None) -> Config:
 | Setting | Config File | Environment Variable |
 |---------|-------------|---------------------|
 | `notion_token` | `notion_token = "..."` | `NOTION_TOKEN` |
+| Backup enabled | `[backup] enabled` | `NOTION_BACKUP_ENABLED` |
 | Backup directory | `[backup] output_dir` | `NOTION_BACKUP_DIR` |
+| Daily enabled | `[daily] enabled` | `NOTION_DAILY_ENABLED` |
 | Daily target page | `[daily] target_page_id` | `NOTION_DAILY_PAGE` |
 | Discord webhook | `[discord] webhook_url` | `DISCORD_WEBHOOK_URL` |
 
@@ -777,3 +779,10 @@ def get_config() -> Config | None:
 - Added Docker deployment patterns in `docs/docker.md`
 - Container uses non-root user and health checks
 - Graceful shutdown via SIGTERM handling
+
+### 2026-02-01
+
+**Feature Toggles:**
+- Added `backup.enabled` and `daily.enabled` configuration options (default: true)
+- Added `NOTION_BACKUP_ENABLED` and `NOTION_DAILY_ENABLED` environment variable overrides
+- Updated configuration sources table with new settings

@@ -45,6 +45,8 @@ class StatusResult:
     incremental_enabled: bool
     discord_enabled: bool
     discord_configured: bool
+    backup_enabled: bool = True
+    daily_enabled: bool = True
 
 
 class OutputFormatter:
@@ -122,6 +124,12 @@ class OutputFormatter:
         dir_status = "exists" if result.backup_dir_exists else "not found"
         print(f"  Backup directory: {result.backup_dir} ({dir_status})")
         print(f"  Incremental mode: {'enabled' if result.incremental_enabled else 'disabled'}")
+        print()
+
+        # Features section
+        print("Features:")
+        print(f"  Backup: {'enabled' if result.backup_enabled else 'DISABLED'}")
+        print(f"  Daily:  {'enabled' if result.daily_enabled else 'DISABLED'}")
         print()
 
         # Backup section

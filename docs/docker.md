@@ -34,6 +34,8 @@ docker run -d \
 |----------|----------|-------------|
 | `NOTION_TOKEN` | Yes | Notion integration token |
 | `DISCORD_WEBHOOK_URL` | No | Discord webhook for notifications |
+| `NOTION_BACKUP_ENABLED` | No | Enable/disable backup feature (default: true) |
+| `NOTION_DAILY_ENABLED` | No | Enable/disable daily content (default: true) |
 
 ### Volume Mounts
 
@@ -228,3 +230,11 @@ docker run --rm \
   -e NOTION_TOKEN=your_token \
   notion-time-capsule notion-time-capsule -vv backup
 ```
+
+---
+
+## Updates
+
+### 2026-02-01
+
+- Added `NOTION_BACKUP_ENABLED` and `NOTION_DAILY_ENABLED` environment variables to toggle features independently

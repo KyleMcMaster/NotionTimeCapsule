@@ -21,6 +21,7 @@ class ConfigurationError(Exception):
 class BackupConfig:
     """Backup configuration settings."""
 
+    enabled: bool = True
     output_dir: Path = field(default_factory=lambda: Path("./backups"))
     include_attachments: bool = True
     incremental: bool = True
@@ -30,6 +31,7 @@ class BackupConfig:
 class DailyConfig:
     """Daily content generation settings."""
 
+    enabled: bool = True
     template_path: Path = field(default_factory=lambda: Path("./templates/daily.md"))
     target_page_id: str = ""
 
@@ -131,12 +133,14 @@ def load_config(config_path: Path | str | None = None) -> Config:
     discord_data = config_data.get("discord", {})
 
     backup_config = BackupConfig(
+        enabled=backup_data.get("enabled", True),
         output_dir=Path(backup_data.get("output_dir", "./backups")),
         include_attachments=backup_data.get("include_attachments", True),
         incremental=backup_data.get("incremental", True),
     )
 
     daily_config = DailyConfig(
+        enabled=daily_data.get("enabled", True),
         template_path=Path(daily_data.get("template_path", "./templates/daily.md")),
         target_page_id=daily_data.get("target_page_id", ""),
     )
@@ -169,6 +173,13 @@ def load_config(config_path: Path | str | None = None) -> Config:
 
     if webhook_url := os.environ.get("DISCORD_WEBHOOK_URL"):
         discord_config.webhook_url = webhook_url
+
+    # Allow env var overrides for enabled flags
+    if backup_enabled := os.environ.get("NOTION_BACKUP_ENABLED"):
+        backup_config.enabled = backup_enabled.lower() in ("true", "1", "yes")
+
+    if daily_enabled := os.environ.get("NOTION_DAILY_ENABLED"):
+        daily_config.enabled = daily_enabled.lower() in ("true", "1", "yes")
 
     return Config(
         notion_token=notion_token,
