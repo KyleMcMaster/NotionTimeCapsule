@@ -73,7 +73,7 @@ class Config:
         errors: list[str] = []
 
         if not self.notion_token:
-            errors.append("NOTION_TOKEN environment variable is required")
+            errors.append("notion_token is required (set in config or NOTION_TOKEN env var)")
 
         if self.daily.target_page_id and not self._is_valid_notion_id(
             self.daily.target_page_id
@@ -155,8 +155,10 @@ def load_config(config_path: Path | str | None = None) -> Config:
         notify_on_failure=discord_data.get("notify_on_failure", True),
     )
 
-    # Environment variable overrides
-    notion_token = os.environ.get("NOTION_TOKEN", "")
+    # Get notion_token from config file first, then env var override
+    notion_token = config_data.get("notion_token", "")
+    if env_token := os.environ.get("NOTION_TOKEN"):
+        notion_token = env_token
 
     # Allow env var overrides for common settings
     if output_dir := os.environ.get("NOTION_BACKUP_DIR"):

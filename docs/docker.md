@@ -1,5 +1,7 @@
 # Docker Deployment
 
+> **Added:** 2026-01-31
+
 NotionTimeCapsule can be run as a Docker container for easy deployment and scheduling.
 
 ## Quick Start

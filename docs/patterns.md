@@ -109,12 +109,23 @@ def load_config(config_path: Path | None = None) -> Config:
         with open(config_path, "rb") as f:
             config_data = tomllib.load(f)
 
-    # Environment variable overrides
-    notion_token = os.environ.get("NOTION_TOKEN", "")
+    # Get notion_token from config file first, then env var override
+    notion_token = config_data.get("notion_token", "")
+    if env_token := os.environ.get("NOTION_TOKEN"):
+        notion_token = env_token
 
     if output_dir := os.environ.get("NOTION_BACKUP_DIR"):
         backup_config.output_dir = Path(output_dir)
 ```
+
+**Supported configuration sources:**
+
+| Setting | Config File | Environment Variable |
+|---------|-------------|---------------------|
+| `notion_token` | `notion_token = "..."` | `NOTION_TOKEN` |
+| Backup directory | `[backup] output_dir` | `NOTION_BACKUP_DIR` |
+| Daily target page | `[daily] target_page_id` | `NOTION_DAILY_PAGE` |
+| Discord webhook | `[discord] webhook_url` | `DISCORD_WEBHOOK_URL` |
 
 ---
 
@@ -442,10 +453,10 @@ class DiscordNotifier:
 
     def notify_backup_complete(self, result: BackupResult) -> bool:
         """Send notification when backup completes."""
-        if not self.config.enabled:
+        if result.success and not self.config.notify_on_success:
             return True
 
-        if result.success and not self.config.notify_on_success:
+        if not result.success and not self.config.notify_on_failure:
             return True
 
         embed = self._create_embed(...)
@@ -457,45 +468,53 @@ class DiscordNotifier:
 - Explicit `close()` method for resource cleanup
 - Early returns based on config flags
 - Returns `bool` for success/failure (doesn't throw)
+- Notifications activate when `webhook_url` is configured (no separate `enabled` flag needed)
 
 ### Configuration-Driven Notifications
 
-Notifications respect multiple config flags:
+Notifications respect granular config flags:
 
 ```python
 @dataclass
 class DiscordConfig:
-    webhook_url: str = ""
-    enabled: bool = False
-    notify_on_start: bool = True
-    notify_on_success: bool = True
-    notify_on_failure: bool = True
+    webhook_url: str = ""           # Presence enables notifications
+    notify_on_start: bool = True    # Send when job starts
+    notify_on_success: bool = True  # Send on successful completion
+    notify_on_failure: bool = True  # Send on failure
 ```
 
 **Benefits:**
 - Users can enable/disable specific notification types
 - Reduces noise (e.g., only notify on failures)
 - Environment variable override for webhook URL
+- No separate `enabled` flag required; `webhook_url` presence activates notifications
 
 ### Notification Integration Points
 
-Different integration points for CLI vs scheduler:
+Both CLI and scheduler send start + completion notifications:
 
 ```python
-# CLI: Completion notifications only (user sees start)
+# CLI: Start + completion notifications
 def backup(ctx: Context) -> None:
+    # Send start notification if webhook configured
+    if ctx.config.discord.webhook_url:
+        notifier = DiscordNotifier(ctx.config.discord)
+        notifier.notify_backup_started(str(ctx.config.backup.output_dir))
+        notifier.close()
+
     result = run_backup(ctx.config)
     ctx.formatter.output(result)
 
-    if ctx.config.discord.enabled:
+    # Send completion notification
+    if ctx.config.discord.webhook_url:
         notifier = DiscordNotifier(ctx.config.discord)
         notifier.notify_backup_complete(result)
         notifier.close()
 
-# Scheduler: Start + completion notifications
+# Scheduler: Same pattern
 def backup_job(config: Config) -> None:
     notifier = None
-    if config.discord.enabled:
+    if config.discord.webhook_url:
         notifier = DiscordNotifier(config.discord)
         notifier.notify_backup_started(str(config.backup.output_dir))
 
@@ -508,9 +527,10 @@ def backup_job(config: Config) -> None:
             notifier.close()
 ```
 
-**Rationale:**
-- CLI is interactive; user knows when it starts
-- Scheduler runs unattended; start notifications provide visibility
+**Key points:**
+- Both CLI and scheduler send start notifications
+- Check for `webhook_url` presence (not `enabled` flag)
+- Users can disable start notifications via `notify_on_start = false`
 
 ### Discord Embed Format
 
@@ -737,3 +757,23 @@ def get_config() -> Config | None:
 | Signal handlers | `scheduler/daemon.py` | Graceful shutdown |
 | Webhook notifications | `utils/discord.py` | External alerting |
 | Status result dataclass | `utils/output.py` | Structured health checks |
+
+---
+
+## Updates
+
+### 2026-01-31
+
+**Configuration Management:**
+- `notion_token` can now be set in config file with env var override
+- Added configuration source table showing all supported settings
+
+**Webhook Notifications:**
+- Removed `enabled` flag requirement; `webhook_url` presence activates notifications
+- CLI commands now send both start and completion notifications (previously completion only)
+- Updated code examples to use `webhook_url` check instead of `enabled`
+
+**Docker Support:**
+- Added Docker deployment patterns in `docs/docker.md`
+- Container uses non-root user and health checks
+- Graceful shutdown via SIGTERM handling

@@ -157,6 +157,13 @@ timezone = "America/New_York"
 - [x] Display configuration validity, backup stats, Discord status
 - [x] Support JSON output with `--json` flag
 
+### Phase 9: Docker Support
+- [x] Create multi-stage `Dockerfile` with Python 3.12-slim
+- [x] Create `docker-compose.yml` for easy deployment
+- [x] Create `.dockerignore` to exclude dev files
+- [x] Run as non-root user with health checks
+- [x] Document Docker usage in `docs/docker.md`
+
 ## Key Design Decisions
 
 | Decision | Choice | Rationale |
@@ -193,3 +200,31 @@ backups/
    - Run `notion-time-capsule daily --template ./templates/daily.md --target-page <id>`
    - Verify content appended to Notion page
    - Run `notion-time-capsule schedule` and verify jobs execute on schedule
+
+---
+
+## Updates
+
+### 2026-01-31
+
+**Configuration Changes:**
+- `notion_token` can now be set in `config.toml` (previously only via `NOTION_TOKEN` env var)
+- Environment variable still takes priority over config file value
+- Discord notifications no longer require `enabled = true`; they activate automatically when `webhook_url` is configured
+
+**New CLI Commands:**
+- Added `test-discord` command to verify webhook configuration
+
+**Discord Notifications:**
+- CLI commands (`backup`, `daily`) now send both start and completion notifications
+- Removed `enabled` flag requirement; presence of `webhook_url` enables notifications
+- Updated `notify_on_start` to work for CLI commands (previously scheduler only)
+
+**Docker Support:**
+- Added `Dockerfile` with multi-stage build (Python 3.12-slim base)
+- Added `docker-compose.yml` for easy deployment
+- Added `.dockerignore` to exclude dev files
+- Container runs as non-root user (UID 1000)
+- Health check via `notion-time-capsule status` command
+- Default command runs scheduler daemon
+- See `docs/docker.md` for complete documentation

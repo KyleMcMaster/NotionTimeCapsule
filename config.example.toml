@@ -1,6 +1,9 @@
 # NotionTimeCapsule Configuration
 # Copy this file to config.toml and fill in your settings.
-# Set NOTION_TOKEN environment variable with your Notion integration token.
+
+# Notion integration token
+# Can also be set via NOTION_TOKEN environment variable (takes priority)
+notion_token = ""
 
 [backup]
 # Directory where backups will be stored
