@@ -238,3 +238,8 @@ backups/
 - CLI commands exit with error message when feature is disabled
 - Status command shows enabled/disabled state for both features
 - `config show` displays enabled state for both backup and daily sections
+
+**Configuration Display on Startup:**
+- Added `_display_config()` helper function to show config with masked secrets
+- `backup`, `daily`, and `schedule` commands now display configuration summary on startup
+- Tokens and webhook URLs are masked with `***` for security

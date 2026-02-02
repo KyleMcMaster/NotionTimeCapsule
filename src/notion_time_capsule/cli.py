@@ -30,6 +30,33 @@ class Context:
 pass_context = click.make_pass_decorator(Context, ensure=True)
 
 
+def _display_config(config: Config, quiet: bool = False) -> None:
+    """Display configuration summary with masked secrets.
+
+    Args:
+        config: Application configuration
+        quiet: If True, suppress output
+    """
+    if quiet:
+        return
+
+    token_display = "***" if config.notion_token else "(not set)"
+    webhook_display = "***" if config.discord.webhook_url else "(not set)"
+
+    click.echo("Configuration:")
+    click.echo(f"  NOTION_TOKEN: {token_display}")
+    click.echo(f"  [backup] enabled={config.backup.enabled}, "
+               f"output_dir={config.backup.output_dir}, "
+               f"incremental={config.backup.incremental}")
+    click.echo(f"  [daily] enabled={config.daily.enabled}, "
+               f"target_page_id={config.daily.target_page_id[:8] + '...' if config.daily.target_page_id else '(not set)'}")
+    click.echo(f"  [scheduler] backup={config.scheduler.backup_schedule}, "
+               f"daily_time={config.scheduler.daily_time}, "
+               f"timezone={config.scheduler.timezone}")
+    click.echo(f"  [discord] webhook={webhook_display}")
+    click.echo()
+
+
 @click.group()
 @click.option(
     "--config",
@@ -137,6 +164,9 @@ def backup(
     """
     assert ctx.config is not None
 
+    # Display configuration on startup
+    _display_config(ctx.config)
+
     # Check if backup is enabled
     if not ctx.config.backup.enabled:
         click.echo("Backup is disabled in configuration.", err=True)
@@ -241,6 +271,9 @@ def daily(
     """
     assert ctx.config is not None
 
+    # Display configuration on startup
+    _display_config(ctx.config)
+
     # Check if daily is enabled
     if not ctx.config.daily.enabled:
         click.echo("Daily content generation is disabled in configuration.", err=True)
@@ -332,6 +365,9 @@ def schedule(ctx: Context, foreground: bool) -> None:
     """
     assert ctx.config is not None
 
+    # Display configuration on startup
+    _display_config(ctx.config)
+
     # Validate token
     if not ctx.config.notion_token:
         click.echo("Error: NOTION_TOKEN environment variable is required", err=True)
@@ -345,15 +381,7 @@ def schedule(ctx: Context, foreground: bool) -> None:
     # Import here to defer heavy imports
     from notion_time_capsule.scheduler.daemon import run_scheduler
 
-    # Show enabled/disabled status
-    backup_status = "enabled" if ctx.config.backup.enabled else "DISABLED"
-    daily_status = "enabled" if ctx.config.daily.enabled else "DISABLED"
-
-    click.echo(
-        f"Starting scheduler (backup: {ctx.config.scheduler.backup_schedule} [{backup_status}], "
-        f"daily: {ctx.config.scheduler.daily_time} [{daily_status}])"
-    )
-
+    click.echo("Starting scheduler...")
     run_scheduler(config=ctx.config, foreground=foreground)
 
 

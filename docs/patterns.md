@@ -786,3 +786,7 @@ def get_config() -> Config | None:
 - Added `backup.enabled` and `daily.enabled` configuration options (default: true)
 - Added `NOTION_BACKUP_ENABLED` and `NOTION_DAILY_ENABLED` environment variable overrides
 - Updated configuration sources table with new settings
+
+**Configuration Display on Startup:**
+- CLI commands (`backup`, `daily`, `schedule`) now display configuration summary on startup
+- Secrets (tokens, webhook URLs) are masked with `***` for security
