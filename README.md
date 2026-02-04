@@ -54,6 +54,9 @@ cp config.example.toml config.toml
 ```
 
 ```toml
+# Notion integration token (can also use NOTION_TOKEN env var)
+notion_token = ""
+
 [backup]
 enabled = true  # Set to false to disable backups
 output_dir = "./backups"
@@ -61,9 +64,9 @@ include_attachments = true
 incremental = true
 
 [daily]
-enabled = true  # Set to false to disable daily content
+enabled = false  # Set to true to enable daily content
 template_path = "./templates/daily.md"
-target_page_id = "your-page-id-here"
+target_page_id = ""  # Get from page URL: notion.so/Page-Name-{page_id}
 
 [scheduler]
 backup_schedule = "daily"  # or "hourly", or cron syntax
