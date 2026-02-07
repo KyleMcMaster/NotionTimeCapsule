@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING
+
+import click
 
 from notion_time_capsule.backup.exporter import run_backup
 from notion_time_capsule.daily.publisher import run_daily
@@ -16,6 +19,11 @@ if TYPE_CHECKING:
 logger = get_logger(__name__)
 
 
+def _timestamp() -> str:
+    """Return a formatted timestamp for console output."""
+    return datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+
 def backup_job(config: Config) -> None:
     """Execute a backup job.
 
@@ -24,9 +32,11 @@ def backup_job(config: Config) -> None:
     """
     if not config.backup.enabled:
         logger.info("Backup job skipped: backup is disabled")
+        click.echo(f"[{_timestamp()}] Backup job skipped: backup is disabled")
         return
 
     logger.info("Starting scheduled backup job")
+    click.echo(f"[{_timestamp()}] Starting scheduled backup job...")
 
     notifier: DiscordNotifier | None = None
     if config.discord.enabled:
@@ -42,10 +52,20 @@ def backup_job(config: Config) -> None:
                 result.pages_backed_up,
                 result.pages_skipped,
             )
+            click.echo(
+                f"[{_timestamp()}] Backup completed: "
+                f"{result.pages_backed_up} pages backed up, "
+                f"{result.pages_skipped} skipped"
+            )
         else:
             logger.error(
                 "Backup job completed with errors: %d errors",
                 len(result.errors),
+            )
+            click.echo(
+                f"[{_timestamp()}] Backup completed with errors: "
+                f"{len(result.errors)} errors",
+                err=True,
             )
 
         if notifier:
@@ -53,6 +73,7 @@ def backup_job(config: Config) -> None:
 
     except Exception as e:
         logger.error("Backup job failed: %s", e)
+        click.echo(f"[{_timestamp()}] Backup job failed: {e}", err=True)
 
     finally:
         if notifier:
@@ -67,9 +88,11 @@ def daily_job(config: Config) -> None:
     """
     if not config.daily.enabled:
         logger.info("Daily job skipped: daily content generation is disabled")
+        click.echo(f"[{_timestamp()}] Daily job skipped: daily content generation is disabled")
         return
 
     logger.info("Starting scheduled daily content job")
+    click.echo(f"[{_timestamp()}] Starting scheduled daily content job...")
 
     notifier: DiscordNotifier | None = None
 
@@ -77,12 +100,17 @@ def daily_job(config: Config) -> None:
         # Check if daily is configured
         if not config.daily.target_page_id:
             logger.warning("Daily job skipped: no target_page_id configured")
+            click.echo(f"[{_timestamp()}] Daily job skipped: no target_page_id configured", err=True)
             return
 
         if not config.daily.template_path.exists():
             logger.warning(
                 "Daily job skipped: template not found at %s",
                 config.daily.template_path,
+            )
+            click.echo(
+                f"[{_timestamp()}] Daily job skipped: template not found at {config.daily.template_path}",
+                err=True,
             )
             return
 
@@ -105,14 +133,20 @@ def daily_job(config: Config) -> None:
                 result.blocks_added,
                 result.page_id[:8],
             )
+            click.echo(
+                f"[{_timestamp()}] Daily completed: "
+                f"{result.blocks_added} blocks added to {result.page_id[:8]}..."
+            )
         else:
             logger.error("Daily job failed: %s", result.error)
+            click.echo(f"[{_timestamp()}] Daily job failed: {result.error}", err=True)
 
         if notifier:
             notifier.notify_daily_complete(result)
 
     except Exception as e:
         logger.error("Daily job failed: %s", e)
+        click.echo(f"[{_timestamp()}] Daily job failed: {e}", err=True)
 
     finally:
         if notifier:
